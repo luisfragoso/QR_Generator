@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <title>Generador de QR</title>
+  <style>
+    :root {
+      --bg: #0b0a12;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel2: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.14);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.68);
+      --shadow: rgba(0, 0, 0, 0.45);
+      --accent: #a11463;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f2f2f2;
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    header {
+      background: radial-gradient(1100px circle at 20% 20%, rgba(162, 20, 99, 0.8), rgba(20, 10, 40, 0.92) 55%, rgba(10, 9, 18, 0.98) 100%);
+      color: white;
+      padding: 26px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    header .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    header .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.25));
+      color: #111;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    header h1 { margin: 0; font-size: 30px; letter-spacing: 0.3px; }
+    header p { margin: 6px 0 0; color: rgba(255, 255, 255, 0.75); }
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 18px 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 14px;
+      padding: 10px 12px;
+      background: #efefef;
+      border-bottom: 1px solid #e5e5e5;
+      color: #333;
+      font-weight: 650;
+    }
+    .section { padding: 12px; }
+    details {
+      border-top: 1px solid #eaeaea;
+      background: #fff;
+    }
+    details summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #222;
+      font-weight: 600;
+    }
+    details summary::after {
+      content: "▸";
+      color: #666;
+      font-size: 14px;
+      line-height: 1;
+      transform: rotate(0deg);
+      transition: transform 140ms ease;
+      margin-left: 8px;
+      flex: 0 0 auto;
+    }
+    details[open] summary::after { transform: rotate(90deg); }
+    details summary::-webkit-details-marker { display: none; }
+    details summary .hint { font-weight: 500; color: #666; font-size: 12px; }
+    details .content { padding: 0 12px 12px; }
+    .form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 12px; color: #333; font-weight: 600; }
+    .field input[type="text"],
+    .field input[type="number"],
+    .field input[type="color"],
+    .field select {
+      width: 100%;
+      padding: 10px 10px;
+      border-radius: 8px;
+      border: 1px solid #d7d7d7;
+      outline: none;
+      font-size: 14px;
+      background: #fff;
+    }
+    .field input[type="file"] { width: 100%; }
+    .field .row2 { display: flex; gap: 10px; align-items: center; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 12px;
+      border-top: 1px solid #e5e5e5;
+      background: #fafafa;
+    }
+    button {
+      border: 1px solid #cfcfcf;
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+    button.primary {
+      background: #111;
+      border-color: #111;
+      color: #fff;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .preview {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      display: grid;
+      place-items: center;
+      gap: 12px;
+    }
+    .qr-wrap {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: #fff;
+    }
+    #canvas { width: 340px; height: 340px; display: grid; place-items: center; }
+    .center-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+    .center-badge {
+      max-width: 50%;
+      max-height: 50%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+      display: grid;
+      place-items: center;
+    }
+    .center-badge img { display: block; max-width: 130px; max-height: 130px; }
+    .center-badge span { font-weight: 800; font-size: 18px; color: #111; text-align: center; }
+    .footer-note { font-size: 12px; color: #666; text-align: center; }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .qr-wrap, #canvas { width: 320px; height: 320px; }
+    }
+  </style>
+  <script type="text/javascript" src="./vendor/qr-code-styling/lib/qr-code-styling.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark">QR</div>
+      <div>
+        <h1>Generador de QR</h1>
+        <p>Genera códigos QR estilizados (app local)</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <div class="grid">
+      <div class="panel">
+        <h2>Main Options</h2>
+        <div class="section">
+          <div class="form">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="data">Data</label>
+              <input id="data" type="text" value="https://qr-code-styling.com" />
+            </div>
+            <div class="field">
+              <label for="width">Width</label>
+              <input id="width" type="number" min="120" max="1400" step="10" value="340" />
+            </div>
+            <div class="field">
+              <label for="height">Height</label>
+              <input id="height" type="number" min="120" max="1400" step="10" value="340" />
+            </div>
+            <div class="field">
+              <label for="margin">Margin</label>
+              <input id="margin" type="number" min="0" max="60" step="1" value="0" />
+            </div>
+            <div class="field">
+              <label for="ecLevel">Error correction</label>
+              <select id="ecLevel">
+                <option value="L">L</option>
+                <option value="M">M</option>
+                <option value="Q" selected>Q</option>
+                <option value="H">H</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <details open>
+          <summary>
+            <span>Dots Options</span>
+            <span class="hint">color + tipo</span>
+          </summary>
+          <div class="content">
+            <div class="form">
+              <div class="field">
+                <label for="dotsColor">Color</label>
+                <input id="dotsColor" type="color" value="#6b0f4a" />
+              </div>
+              <div class="field">
+                <label for="dotsType">Type</label>
+                <select id="dotsType">
+                  <option value="square">square</option>
+                  <option value="rounded" selected>rounded</option>
+                  <option value="dots">dots</option>
+                  <option value="classy">classy</option>
+                  <option value="classy-rounded">classy-rounded</option>
+                  <option value="extra-rounded">extra-rounded</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span>Corners Options</span>
+            <span class="hint">square + dot</span>
+          </summary>
+          <div class="content">
+            <div class="form">
+              <div class="field">
+                <label for="cornerSquareType">Corners Square Type</label>
+                <select id="cornerSquareType">
+                  <option value="square">square</option>
+                  <option value="dot">dot</option>
+                  <option value="rounded" selected>rounded</option>
+                  <option value="extra-rounded">extra-rounded</option>
+                  <option value="dots">dots</option>
+                  <option value="classy">classy</option>
+                  <option value="classy-rounded">classy-rounded</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cornerSquareColor">Corners Square Color</label>
+                <input id="cornerSquareColor" type="color" value="#111111" />
+              </div>
+              <div class="field">
+                <label for="cornerDotType">Corners Dot Type</label>
+                <select id="cornerDotType">
+                  <option value="square">square</option>
+                  <option value="dot" selected>dot</option>
+                  <option value="rounded">rounded</option>
+                  <option value="dots">dots</option>
+                  <option value="classy">classy</option>
+                  <option value="classy-rounded">classy-rounded</option>
+                  <option value="extra-rounded">extra-rounded</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cornerDotColor">Corners Dot Color</label>
+                <input id="cornerDotColor" type="color" value="#111111" />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span>Background Options</span>
+            <span class="hint">fondo</span>
+          </summary>
+          <div class="content">
+            <div class="form">
+              <div class="field">
+                <label for="bgColor">Color</label>
+                <input id="bgColor" type="color" value="#ffffff" />
+              </div>
+              <div class="field">
+                <label for="qrType">Render</label>
+                <select id="qrType">
+                  <option value="svg" selected>svg</option>
+                  <option value="canvas">canvas</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span>Center</span>
+            <span class="hint">imagen o texto</span>
+          </summary>
+          <div class="content">
+            <div class="form">
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>Modo</label>
+                <div class="row2">
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#222;">
+                    <input type="radio" name="centerMode" value="none" checked /> Ninguno
+                  </label>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#222;">
+                    <input type="radio" name="centerMode" value="image" /> Imagen
+                  </label>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#222;">
+                    <input type="radio" name="centerMode" value="text" /> Texto
+                  </label>
+                </div>
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="centerImage">Imagen (archivo local)</label>
+                <input id="centerImage" type="file" accept="image/*" />
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="centerText">Texto</label>
+                <input id="centerText" type="text" value="DEMO" />
+              </div>
+              <div class="field">
+                <label for="centerTextSize">Tamaño texto</label>
+                <input id="centerTextSize" type="number" min="10" max="60" step="1" value="18" />
+              </div>
+              <div class="field">
+                <label for="centerTextColor">Color texto</label>
+                <input id="centerTextColor" type="color" value="#111111" />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button id="btnApply" class="primary">Aplicar</button>
+          <button id="btnReset">Reset</button>
+          <div style="flex: 1;"></div>
+          <select id="downloadExt" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #d7d7d7;">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="webp">WEBP</option>
+            <option value="svg" selected>SVG</option>
+          </select>
+          <button id="btnDownload">Download</button>
+        </div>
+      </div>
+
+      <div class="preview">
+        <div class="qr-wrap">
+          <div id="canvas"></div>
+          <div class="center-overlay">
+            <div id="centerBadge" class="center-badge" style="display:none;">
+              <img id="centerBadgeImg" alt="" style="display:none;" />
+              <span id="centerBadgeText" style="display:none;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="footer-note">Tip: si quieres que el centro salga también en el archivo descargado, lo hacemos en un siguiente ajuste.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    const el = (id) => document.getElementById(id);
+
+    const state = {
+      centerMode: "none",
+      centerImageDataUrl: "",
+      centerTextImageDataUrl: "",
+    };
+
+    const canvasEl = el("canvas");
+    const centerBadgeEl = el("centerBadge");
+    const centerBadgeImgEl = el("centerBadgeImg");
+    const centerBadgeTextEl = el("centerBadgeText");
+
+    let qrCode;
+    let lastRenderKey = "";
+
+    function escapeTextForCanvas(text) {
+      return String(text || "").replace(/[\n\r\t]+/g, " ").trim();
+    }
+
+    function renderCenterTextToDataUrl() {
+      const text = escapeTextForCanvas(el("centerText").value);
+      if (!text) return "";
+
+      const fontSize = Number(el("centerTextSize").value) || 18;
+      const textColor = el("centerTextColor").value || "#111111";
+
+      const paddingX = 14;
+      const paddingY = 10;
+      const borderRadius = 14;
+      const borderWidth = 2;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "";
+
+      ctx.font = `800 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+      const metrics = ctx.measureText(text);
+      const textWidth = Math.ceil(metrics.width);
+      const textHeight = Math.ceil(fontSize * 1.15);
+
+      canvas.width = textWidth + paddingX * 2 + borderWidth * 2;
+      canvas.height = textHeight + paddingY * 2 + borderWidth * 2;
+
+      const x = borderWidth;
+      const y = borderWidth;
+      const w = canvas.width - borderWidth * 2;
+      const h = canvas.height - borderWidth * 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      const r = Math.min(borderRadius, w / 2, h / 2);
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.fill();
+      ctx.lineWidth = borderWidth;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.12)";
+      ctx.stroke();
+
+      ctx.font = `800 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 1);
+
+      return canvas.toDataURL("image/png");
+    }
+
+    function getOptions() {
+      const width = Number(el("width").value);
+      const height = Number(el("height").value);
+      const type = el("qrType").value;
+
+      const options = {
+        width,
+        height,
+        type,
+        data: el("data").value,
+        margin: Number(el("margin").value),
+        qrOptions: {
+          errorCorrectionLevel: el("ecLevel").value
+        },
+        dotsOptions: {
+          color: el("dotsColor").value,
+          type: el("dotsType").value
+        },
+        cornersSquareOptions: {
+          color: el("cornerSquareColor").value,
+          type: el("cornerSquareType").value
+        },
+        cornersDotOptions: {
+          color: el("cornerDotColor").value,
+          type: el("cornerDotType").value
+        },
+        backgroundOptions: {
+          color: el("bgColor").value
+        }
+      };
+
+      if (state.centerMode === "image" && state.centerImageDataUrl) {
+        options.image = state.centerImageDataUrl;
+        options.imageOptions = {
+          margin: 10,
+          imageSize: 0.42,
+          hideBackgroundDots: true
+        };
+      }
+
+      if (state.centerMode === "text") {
+        const textImage = state.centerTextImageDataUrl || renderCenterTextToDataUrl();
+        state.centerTextImageDataUrl = textImage;
+        if (textImage) {
+          options.image = textImage;
+          options.imageOptions = {
+            margin: 10,
+            imageSize: 0.42,
+            hideBackgroundDots: true
+          };
+        }
+      }
+
+      return options;
+    }
+
+    function syncBadge() {
+      const mode = state.centerMode;
+      const text = el("centerText").value.trim();
+      const textSize = Number(el("centerTextSize").value);
+      const textColor = el("centerTextColor").value;
+
+      if (mode === "none") {
+        centerBadgeEl.style.display = "none";
+        centerBadgeImgEl.style.display = "none";
+        centerBadgeTextEl.style.display = "none";
+        return;
+      }
+
+      if (mode === "text") {
+        centerBadgeEl.style.display = "none";
+        centerBadgeImgEl.style.display = "none";
+        centerBadgeTextEl.style.display = "none";
+        return;
+      }
+
+      centerBadgeEl.style.display = "grid";
+
+      if (mode === "image") {
+        centerBadgeImgEl.src = state.centerImageDataUrl || "";
+        centerBadgeImgEl.style.display = state.centerImageDataUrl ? "block" : "none";
+        centerBadgeTextEl.style.display = "none";
+        return;
+      }
+
+      if (mode === "text") {
+        centerBadgeImgEl.style.display = "none";
+        centerBadgeTextEl.textContent = text || "";
+        centerBadgeTextEl.style.display = text ? "block" : "none";
+        centerBadgeTextEl.style.fontSize = textSize + "px";
+        centerBadgeTextEl.style.color = textColor;
+      }
+    }
+
+    function setCenterMode(mode) {
+      state.centerMode = mode;
+      if (mode !== "text") state.centerTextImageDataUrl = "";
+      syncBadge();
+      apply({ forceRecreate: true });
+    }
+
+    function apply({ forceRecreate = false } = {}) {
+      const options = getOptions();
+
+      const renderKey = JSON.stringify({
+        type: options.type,
+        hasImage: Boolean(options.image)
+      });
+
+      canvasEl.style.width = options.width + "px";
+      canvasEl.style.height = options.height + "px";
+
+      const shouldRecreate = forceRecreate || !qrCode || lastRenderKey !== renderKey;
+      lastRenderKey = renderKey;
+
+      if (shouldRecreate) {
+        canvasEl.innerHTML = "";
+        qrCode = new QRCodeStyling(options);
+        qrCode.append(canvasEl);
+        return;
+      }
+
+      qrCode.update(options);
+    }
+
+    function reset() {
+      el("data").value = "https://qr-code-styling.com";
+      el("width").value = "340";
+      el("height").value = "340";
+      el("margin").value = "0";
+      el("ecLevel").value = "Q";
+      el("dotsColor").value = "#6b0f4a";
+      el("dotsType").value = "rounded";
+      el("cornerSquareType").value = "rounded";
+      el("cornerSquareColor").value = "#111111";
+      el("cornerDotType").value = "dot";
+      el("cornerDotColor").value = "#111111";
+      el("bgColor").value = "#ffffff";
+      el("qrType").value = "svg";
+      el("downloadExt").value = "svg";
+      el("centerImage").value = "";
+      el("centerText").value = "DEMO";
+      el("centerTextSize").value = "18";
+      el("centerTextColor").value = "#111111";
+      state.centerImageDataUrl = "";
+      const radio = document.querySelector('input[name="centerMode"][value="none"]');
+      if (radio) radio.checked = true;
+      setCenterMode("none");
+      apply();
+    }
+
+    document.querySelectorAll('input[name="centerMode"]').forEach((r) => {
+      r.addEventListener("change", (e) => setCenterMode(e.target.value));
+    });
+
+    el("centerImage").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        state.centerImageDataUrl = "";
+        syncBadge();
+        apply({ forceRecreate: true });
+        return;
+      }
+
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+        reader.readAsDataURL(file);
+      });
+
+      state.centerImageDataUrl = dataUrl;
+      const radio = document.querySelector('input[name="centerMode"][value="image"]');
+      if (radio) radio.checked = true;
+      setCenterMode("image");
+    });
+
+    [
+      "data","width","height","margin","ecLevel","dotsColor","dotsType","cornerSquareType","cornerSquareColor","cornerDotType","cornerDotColor","bgColor","qrType"
+    ].forEach((id) => {
+      el(id).addEventListener("input", () => apply());
+      el(id).addEventListener("change", () => apply({ forceRecreate: id === "qrType" }));
+    });
+
+    ["centerText","centerTextSize","centerTextColor"].forEach((id) => {
+      el(id).addEventListener("input", () => {
+        state.centerTextImageDataUrl = "";
+        syncBadge();
+        if (state.centerMode === "text") apply();
+      });
+    });
+
+    el("btnApply").addEventListener("click", () => apply());
+    el("btnReset").addEventListener("click", () => reset());
+
+    el("btnDownload").addEventListener("click", () => {
+      if (!qrCode) return;
+      const extension = el("downloadExt").value;
+      qrCode.download({ name: "qr", extension });
+    });
+
+    syncBadge();
+    apply();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

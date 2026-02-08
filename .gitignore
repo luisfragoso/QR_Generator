@@ -1,0 +1,56 @@
+# Node / JS
+node_modules/
+**/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+
+# Metro
+.metro-cache/
+
+# EAS
+.eas/
+
+# Android
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+
+# Builds / artifacts
+*.apk
+*.aab
+*.ipa
+*.keystore
+
+# Electron build output
+demo-qr/dist/
+
+# Web builds
+web/dist/
+web/build/
+
+# Temporary / extracted
+temp_extract/
+
+# Environment files
+.env
+.env.*
