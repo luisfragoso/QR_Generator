@@ -1,10 +1,9 @@
-const CACHE_NAME = "generador-qr-v2";
+const CACHE_NAME = "generador-qr-v3";
 
 const CORE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/service-worker.js",
   "/vendor/qr-code-styling/lib/qr-code-styling.js",
   "/vendor/qr-code-styling/lib/qr-code-styling.js.map",
   "/icons/icon-192.png",
@@ -51,7 +50,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Network-first for HTML navigation to allow updates
-  if (req.mode === "navigate") {
+  if (req.mode === "navigate" || url.pathname === "/" || url.pathname === "/index.html") {
     event.respondWith(
       fetch(req)
         .then((res) => {

@@ -25,6 +25,11 @@
     ExpiresActive Off
   </Files>
 
+  <Files "index.html">
+    Header set Cache-Control "no-store"
+    ExpiresActive Off
+  </Files>
+
   <Files "manifest.webmanifest">
     Header set Cache-Control "no-store"
     ExpiresActive Off
