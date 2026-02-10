@@ -682,16 +682,10 @@
 
     el("btnDownload").addEventListener("click", async () => {
       try {
-        apply();
-        if (!qrCode) return;
-
+        const options = getOptions();
         const extension = el("downloadExt").value;
-        let raw = null;
-        for (let waited = 0; waited <= 300; waited += 50) {
-          raw = await qrCode.getRawData(extension);
-          if (raw) break;
-          if (waited < 300) await new Promise((r) => setTimeout(r, 50));
-        }
+        const tmpQr = new QRCodeStyling(options);
+        const raw = await tmpQr.getRawData(extension);
         if (!raw) return;
 
         const blob = raw instanceof Blob ? raw : new Blob([raw], { type: "application/octet-stream" });
