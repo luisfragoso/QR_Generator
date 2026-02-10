@@ -674,10 +674,29 @@
     el("btnApply").addEventListener("click", () => apply());
     el("btnReset").addEventListener("click", () => reset());
 
-    el("btnDownload").addEventListener("click", () => {
-      if (!qrCode) return;
-      const extension = el("downloadExt").value;
-      qrCode.download({ name: "qr", extension });
+    el("btnDownload").addEventListener("click", async () => {
+      try {
+        apply();
+        if (!qrCode) return;
+
+        const extension = el("downloadExt").value;
+        const raw = await qrCode.getRawData(extension);
+        if (!raw) return;
+
+        const blob = raw instanceof Blob ? raw : new Blob([raw], { type: "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `qr.${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        URL.revokeObjectURL(url);
+      } catch {
+        // noop
+      }
     });
 
     syncBadge();

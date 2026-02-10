@@ -103,6 +103,7 @@ function Section({
 export default function HomeScreen() {
   const webviewRef = useRef<WebView>(null);
   const [form, setForm] = useState<QrState>(DEFAULT_STATE);
+  const formRef = useRef<QrState>(DEFAULT_STATE);
   const [previewPngDataUrl, setPreviewPngDataUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [qrStylingScript, setQrStylingScript] = useState<string | null>(null);
@@ -115,6 +116,18 @@ export default function HomeScreen() {
 
   const canUseCenterImage = form.centerMode === 'image' && !!form.centerImageDataUrl;
   const canUseCenterText = form.centerMode === 'text' && !!form.centerText.trim();
+
+  const updateForm = useCallback((updater: (prev: QrState) => QrState) => {
+    setForm((prev) => {
+      const next = updater(prev);
+      formRef.current = next;
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,13 +165,13 @@ export default function HomeScreen() {
     const mime = asset.mimeType || 'image/png';
     const dataUrl = `data:${mime};base64,${base64}`;
 
-    setForm((s) => ({
+    updateForm((s) => ({
       ...s,
       centerImageUri: asset.uri,
       centerImageDataUrl: dataUrl,
       centerMode: 'image',
     }));
-  }, []);
+  }, [updateForm]);
 
   const webHtml = useMemo(() => {
     if (!qrStylingScript) return null;
@@ -270,14 +283,14 @@ export default function HomeScreen() {
   const apply = useCallback(() => {
     if (!qrStylingScript) return;
     setBusy(true);
-    const options = makeQrOptions(form);
+    const options = makeQrOptions(formRef.current);
     webviewRef.current?.postMessage(JSON.stringify({ type: 'render', options }));
-  }, [form, makeQrOptions, qrStylingScript]);
+  }, [makeQrOptions, qrStylingScript]);
 
   const reset = useCallback(() => {
-    setForm(DEFAULT_STATE);
+    updateForm(() => DEFAULT_STATE);
     setPreviewPngDataUrl(null);
-  }, []);
+  }, [updateForm]);
 
   const onWebMessage = useCallback((event: any) => {
     try {
@@ -318,7 +331,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.label}>Data</ThemedText>
           <TextInput
             value={form.data}
-            onChangeText={(t) => setForm((s) => ({ ...s, data: t }))}
+            onChangeText={(t) => updateForm((s) => ({ ...s, data: t }))}
             placeholder="Texto, URL, WiFi, etc"
             autoCapitalize="none"
             autoCorrect={false}
@@ -331,7 +344,7 @@ export default function HomeScreen() {
               <TextInput
                 value={String(form.size)}
                 onChangeText={(t) =>
-                  setForm((s) => ({ ...s, size: clampInt(t, s.size, 128, 1024) }))
+                  updateForm((s) => ({ ...s, size: clampInt(t, s.size, 128, 1024) }))
                 }
                 keyboardType="number-pad"
                 style={styles.input}
@@ -349,7 +362,7 @@ export default function HomeScreen() {
               <TextInput
                 value={String(form.margin)}
                 onChangeText={(t) =>
-                  setForm((s) => ({ ...s, margin: clampInt(t, s.margin, 0, 80) }))
+                  updateForm((s) => ({ ...s, margin: clampInt(t, s.margin, 0, 80) }))
                 }
                 keyboardType="number-pad"
                 style={styles.input}
@@ -361,7 +374,7 @@ export default function HomeScreen() {
                 {(['L', 'M', 'Q', 'H'] as const).map((lvl) => (
                   <Pressable
                     key={lvl}
-                    onPress={() => setForm((s) => ({ ...s, errorCorrectionLevel: lvl }))}
+                    onPress={() => updateForm((s) => ({ ...s, errorCorrectionLevel: lvl }))}
                     style={[styles.chip, form.errorCorrectionLevel === lvl && styles.chipActive]}>
                     <ThemedText type="defaultSemiBold">{lvl}</ThemedText>
                   </Pressable>
@@ -379,7 +392,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.label}>Color</ThemedText>
           <TextInput
             value={form.dotsColor}
-            onChangeText={(t) => setForm((s) => ({ ...s, dotsColor: t }))}
+            onChangeText={(t) => updateForm((s) => ({ ...s, dotsColor: t }))}
             placeholder="#111111"
             autoCapitalize="none"
             style={styles.input}
@@ -391,7 +404,7 @@ export default function HomeScreen() {
             ).map((t) => (
               <Pressable
                 key={t}
-                onPress={() => setForm((s) => ({ ...s, dotsType: t }))}
+                onPress={() => updateForm((s) => ({ ...s, dotsType: t }))}
                 style={[styles.chip, form.dotsType === t && styles.chipActive]}>
                 <ThemedText type="defaultSemiBold">{t}</ThemedText>
               </Pressable>
@@ -407,7 +420,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.label}>Corner square color</ThemedText>
           <TextInput
             value={form.cornersSquareColor}
-            onChangeText={(t) => setForm((s) => ({ ...s, cornersSquareColor: t }))}
+            onChangeText={(t) => updateForm((s) => ({ ...s, cornersSquareColor: t }))}
             placeholder="#111111"
             autoCapitalize="none"
             style={styles.input}
@@ -417,7 +430,7 @@ export default function HomeScreen() {
             {(['square', 'dot', 'extra-rounded'] as const).map((t) => (
               <Pressable
                 key={t}
-                onPress={() => setForm((s) => ({ ...s, cornersSquareType: t }))}
+                onPress={() => updateForm((s) => ({ ...s, cornersSquareType: t }))}
                 style={[styles.chip, form.cornersSquareType === t && styles.chipActive]}>
                 <ThemedText type="defaultSemiBold">{t}</ThemedText>
               </Pressable>
@@ -427,7 +440,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.label}>Corner dot color</ThemedText>
           <TextInput
             value={form.cornersDotColor}
-            onChangeText={(t) => setForm((s) => ({ ...s, cornersDotColor: t }))}
+            onChangeText={(t) => updateForm((s) => ({ ...s, cornersDotColor: t }))}
             placeholder="#111111"
             autoCapitalize="none"
             style={styles.input}
@@ -437,7 +450,7 @@ export default function HomeScreen() {
             {(['dot', 'square'] as const).map((t) => (
               <Pressable
                 key={t}
-                onPress={() => setForm((s) => ({ ...s, cornersDotType: t }))}
+                onPress={() => updateForm((s) => ({ ...s, cornersDotType: t }))}
                 style={[styles.chip, form.cornersDotType === t && styles.chipActive]}>
                 <ThemedText type="defaultSemiBold">{t}</ThemedText>
               </Pressable>
@@ -453,7 +466,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.label}>Background</ThemedText>
           <TextInput
             value={form.backgroundColor}
-            onChangeText={(t) => setForm((s) => ({ ...s, backgroundColor: t }))}
+            onChangeText={(t) => updateForm((s) => ({ ...s, backgroundColor: t }))}
             placeholder="#ffffff"
             autoCapitalize="none"
             style={styles.input}
@@ -467,17 +480,17 @@ export default function HomeScreen() {
           onToggle={() => setOpenCenter((v) => !v)}>
           <View style={styles.row}>
             <Pressable
-              onPress={() => setForm((s) => ({ ...s, centerMode: 'none' }))}
+              onPress={() => updateForm((s) => ({ ...s, centerMode: 'none' }))}
               style={[styles.chip, form.centerMode === 'none' && styles.chipActive]}>
               <ThemedText type="defaultSemiBold">Ninguno</ThemedText>
             </Pressable>
             <Pressable
-              onPress={() => setForm((s) => ({ ...s, centerMode: 'image' }))}
+              onPress={() => updateForm((s) => ({ ...s, centerMode: 'image' }))}
               style={[styles.chip, form.centerMode === 'image' && styles.chipActive]}>
               <ThemedText type="defaultSemiBold">Imagen</ThemedText>
             </Pressable>
             <Pressable
-              onPress={() => setForm((s) => ({ ...s, centerMode: 'text' }))}
+              onPress={() => updateForm((s) => ({ ...s, centerMode: 'text' }))}
               style={[styles.chip, form.centerMode === 'text' && styles.chipActive]}>
               <ThemedText type="defaultSemiBold">Texto</ThemedText>
             </Pressable>
@@ -489,7 +502,7 @@ export default function HomeScreen() {
                 <ThemedText type="defaultSemiBold">Elegir imagen</ThemedText>
               </Pressable>
               <Pressable
-                onPress={() => setForm((s) => ({ ...s, centerImageUri: null, centerImageDataUrl: null }))}
+                onPress={() => updateForm((s) => ({ ...s, centerImageUri: null, centerImageDataUrl: null }))}
                 style={[styles.button, styles.buttonSecondary]}>
                 <ThemedText type="defaultSemiBold">Quitar</ThemedText>
               </Pressable>
@@ -499,7 +512,7 @@ export default function HomeScreen() {
           {form.centerMode === 'text' ? (
             <TextInput
               value={form.centerText}
-              onChangeText={(t) => setForm((s) => ({ ...s, centerText: t }))}
+              onChangeText={(t) => updateForm((s) => ({ ...s, centerText: t }))}
               placeholder="Texto al centro"
               autoCapitalize="characters"
               style={styles.input}
