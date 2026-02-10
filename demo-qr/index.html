@@ -679,6 +679,9 @@
         apply();
         if (!qrCode) return;
 
+        await new Promise((r) => requestAnimationFrame(() => r()));
+        await new Promise((r) => requestAnimationFrame(() => r()));
+
         const extension = el("downloadExt").value;
         const raw = await qrCode.getRawData(extension);
         if (!raw) return;
