@@ -1,4 +1,4 @@
-const CACHE_NAME = "generador-qr-v4";
+const CACHE_NAME = "generador-qr-v6";
 
 const CORE_ASSETS = [
   "/",

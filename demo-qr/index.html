@@ -679,11 +679,13 @@
         apply();
         if (!qrCode) return;
 
-        await new Promise((r) => requestAnimationFrame(() => r()));
-        await new Promise((r) => requestAnimationFrame(() => r()));
-
         const extension = el("downloadExt").value;
-        const raw = await qrCode.getRawData(extension);
+        let raw = null;
+        for (let waited = 0; waited <= 300; waited += 50) {
+          raw = await qrCode.getRawData(extension);
+          if (raw) break;
+          if (waited < 300) await new Promise((r) => setTimeout(r, 50));
+        }
         if (!raw) return;
 
         const blob = raw instanceof Blob ? raw : new Blob([raw], { type: "application/octet-stream" });
